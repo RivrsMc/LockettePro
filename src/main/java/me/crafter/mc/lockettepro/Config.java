@@ -151,7 +151,9 @@ public class Config {
                 }
             }
         }
-        lockables.removeAll(Tag.SIGNS.getValues());
+
+
+        lockables.remove(Tag.SIGNS.getValues());
         lockables.remove(Material.SCAFFOLDING);
     }
 

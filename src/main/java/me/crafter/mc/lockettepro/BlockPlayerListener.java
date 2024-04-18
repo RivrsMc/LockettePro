@@ -22,6 +22,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -113,6 +114,12 @@ public class BlockPlayerListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onManualLock(SignChangeEvent event){
         if (!Tag.WALL_SIGNS.isTagged(event.getBlock().getType())) return;
+
+        if(LocketteProAPI.isLockSign(event.getBlock()) && !LocketteProAPI.isOwnerOfSign(event.getBlock(), event.getPlayer())) {
+            event.setCancelled(true);
+            return;
+        }
+
         String topline = event.getLine(0);
         if (topline == null) topline = "";
         Player player = event.getPlayer();
