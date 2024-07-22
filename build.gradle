@@ -1,0 +1,146 @@
+plugins {
+
+    id 'java'
+    id 'io.papermc.paperweight.userdev' version '1.5.5'
+    id 'xyz.jpenilla.run-paper' version '2.1.0'
+    id 'maven-publish'
+}
+
+group = 'com.rivrs'
+version = project.properties["plugin.version"]
+
+repositories {
+
+    mavenCentral()
+
+    maven {
+        url = "http://10.8.0.6:8081/repository/seasonsky-release/"
+        allowInsecureProtocol = true
+        credentials {
+            username = property('rivrsNexusUsername')
+            password = property('rivrsNexusPassword')
+        }
+    }
+
+    maven {
+        url = "http://10.8.0.6:8081/repository/seasonsky-snapshot/"
+        allowInsecureProtocol = true
+        credentials {
+            username = property('rivrsNexusUsername')
+            password = property('rivrsNexusPassword')
+        }
+    }
+
+    maven { url = "https://repo.papermc.io/repository/maven-public/" }
+
+    maven { url = "https://oss.sonatype.org/content/groups/public/" }
+
+    maven { url 'https://jitpack.io/' }
+
+    maven {
+        name = "placeholderapi"
+        url = "https://repo.extendedclip.com/content/repositories/placeholderapi/"
+    }
+
+    maven { url 'https://mvn.lumine.io/repository/maven-public/' }
+    maven { url "https://repo.dmulloy2.net/repository/public/" }
+    maven { url "https://maven.enginehub.org/repo/" }
+    maven { url "https://maven.playpro.com" }
+
+}
+
+dependencies {
+    paperweight.paperDevBundle(project.properties["minecraft.paper.version"])
+
+    compileOnly 'net.coreprotect:coreprotect:22.2'
+    compileOnly ("com.github.MilkBowl:VaultAPI:1.7") {
+        exclude group: 'org.bukkit', module: 'bukkit'
+    }
+    compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.9'
+    compileOnly "com.github.LoneDev6:API-ItemsAdder:${project.properties["itemsadder.version"]}"
+    compileOnly "me.clip:placeholderapi:${project.properties["papi.version"]}"
+
+    compileOnly "io.squid:sync:${project.properties["sync.version"]}"
+    compileOnly "io.squid:economy:${project.properties["economy.version"]}"
+    compileOnly "io.rivrs:stats:${project.properties["stats.version"]}"
+    compileOnly "io.lumine:Mythic-Dist:${project.properties["mythic.version"]}"
+
+    compileOnly "com.rivrs:RivrsKtCore:${project.properties["ktcore.version"]}"
+    compileOnly 'com.comphenix.protocol:ProtocolLib:5.1.0'
+
+    compileOnly "net.objecthunter:exp4j:${project.properties["exp4j.version"]}"
+
+}
+
+def targetJavaVersion = 17
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release = targetJavaVersion
+    }
+}
+
+static def createSubMaps(Map inputMap) {
+    def resultMap = [:]
+
+    inputMap.each { key, value ->
+        def parts = key.split("\\.")
+        def currentMap = resultMap
+
+        for (int i = 0; i < parts.size() - 1; i++) {
+            def part = parts[i]
+            currentMap[part] = currentMap[part] ?: [:]
+            currentMap = currentMap[part]
+        }
+
+        currentMap[parts[-1]] = value
+    }
+
+    return resultMap
+}
+
+
+
+processResources {
+    def inputs = [
+            'exp4jVersion': project.properties["exp4j.version"],
+            'version': project.properties["plugin.version"]
+    ]
+
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand inputs
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = project.group
+            artifactId = project.name
+            version = project.version + '-SNAPSHOT'
+        }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            name = 'seasonsky-snapshot'
+            url = uri("http://10.8.0.6:8081/repository/seasonsky-snapshot/")
+            allowInsecureProtocol = true
+            credentials {
+                username = property('rivrsNexusUsername')
+                password = property('rivrsNexusPassword')
+            }
+        }
+    }
+}
